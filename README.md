@@ -8,36 +8,18 @@ Transparency-first political media analysis tooling. The app intentionally **doe
 - ✅ Combined mode (`npm run dev:full`) runs both concurrently.
 - ✅ Production build completes (`npm run build`).
 
-## Stack
-- React + Vite + TypeScript
-- Tailwind CSS
-- Recharts
-- Express (lightweight methodology + health endpoint)
-- Mock-first data with optional live APIs
-
-## MVP Features
-
-### 1) Bias Dashboard
-- Coverage volume timeline (Left / Center / Right)
-- Framing term intensity chart
-- Omission radar + asymmetry pie
-- Engagement vs reliability scatter
-- Clickable timeline legend to open source article links
-- Refresh button + loading/error states
-
-### 2) Article Annotator
-- URL/text paste flow
-- Embedded URL iframe viewer (or highlighted sample text fallback)
-- Claim flags with multi-checker labels
-- Alternative headlines + ownership snippets
-- Live fact-check lookup panel (GNews proxy)
-- “Compare coverage” mini-panel
-
-### 3) Hidden News Radar
-- Red warning banner + report-inaccurate placeholder link
-- Virality-gap sorted feed cards (10+ seeded cards)
-- Virality gap visual bar + credibility badge + fact-check links
-- Refresh support + loading/error states
+## New in this phase
+- Vercel deploy-ready config (`vercel.json`) + serverless API routes in `/api`.
+- User Settings modal:
+  - Fact-checker checkbox controls (PolitiFact / Snopes / FactCheck.org)
+  - Draggable outlet manager (Left / Center / Right) persisted to localStorage
+- Premium placeholders:
+  - Heavy annotation usage upsell banner
+  - Dashboard “Save dashboard (Premium)” button
+  - Premium modal (“coming soon”, no payments)
+- Exposure enhancements:
+  - Dashboard ownership footnote links
+  - Hidden Radar X proxy engagement field (public endpoint fallback)
 
 ## Run locally
 
@@ -62,13 +44,34 @@ VITE_RSS2JSON_KEY=
 If a key is missing, UI shows a yellow warning:
 > API key missing — using mock data. Add key to .env to enable live data.
 
+## Deploy to Vercel
+1. Push this repo to GitHub/GitLab/Bitbucket.
+2. In Vercel, click **Add New Project** and import repo.
+3. Framework preset: **Vite** (auto-detected).
+4. Build command: `npm run build`
+5. Output directory: `dist`
+6. Add environment variables in Vercel Project Settings:
+   - `VITE_NEWSAPI_KEY`
+   - `VITE_GNEWS_KEY`
+   - `VITE_RSS2JSON_KEY`
+7. Deploy.
+
+### One-click deploy button (replace YOUR_REPO_URL)
+`https://vercel.com/new/clone?repository-url=YOUR_REPO_URL`
+
 ## Screenshot Proof (captured during validation)
-- Dashboard: `artifacts/dashboard-full.png`
-- Annotator: `artifacts/annotator-full.png`
-- Hidden Radar: `artifacts/radar-full.png`
-- Mobile (iPhone 14): `artifacts/mobile-iphone14.png`
+- Dashboard: `artifacts/dashboard-new.png`
+- Settings modal: `artifacts/settings-modal.png`
+- Premium modal: `artifacts/premium-modal.png`
+- Mobile dark mode (iPhone 14): `artifacts/mobile-dark.png`
+
+## Feedback
+Open an issue with:
+- which outlet assignments feel off,
+- which fact-checkers to add/remove,
+- and which radar cards need better source links.
 
 ## Next Improvements (within same philosophy)
-- User-configurable source lists and transparent bias mapping editor
-- Save/export watchlists and virality spikes
-- Optional premium gating placeholder for advanced exports
+- User-configurable source lists and transparent bias mapping editor export/import
+- Saved watchlists and virality alerts (premium-gated later)
+- Optional premium gating with actual billing integration (future)

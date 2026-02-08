@@ -1,8 +1,19 @@
 import { LoadingBlock } from '../components/LoadingBlock';
 import { useRadarFeed } from '../hooks/useRadarFeed';
 
-export const RadarPage = () => {
+type Props = {
+  config: { factCheckers: Record<string, boolean> };
+};
+
+const checkerLinks: Record<string, string> = {
+  PolitiFact: 'https://www.politifact.com/',
+  Snopes: 'https://www.snopes.com/',
+  'FactCheck.org': 'https://www.factcheck.org/',
+};
+
+export const RadarPage = ({ config }: Props) => {
   const { cards, loading, error, fetchedAt, refresh } = useRadarFeed();
+  const enabledCheckers = Object.entries(config.factCheckers).filter(([, enabled]) => enabled).map(([name]) => name);
 
   return (
     <section className="space-y-4">
@@ -18,7 +29,7 @@ export const RadarPage = () => {
           <h2 className="text-sm font-semibold">Hidden News Radar feed</h2>
           <button onClick={() => void refresh()} className="rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-slate-950">Refresh data</button>
         </div>
-        <p className="mt-1 text-xs text-slate-300">Includes curated undercovered cards + optional RSS pull.</p>
+        <p className="mt-1 text-xs text-slate-300">Includes curated undercovered cards + optional RSS pull + public X follower-derived proxy.</p>
 
         {loading ? <div className="mt-4"><LoadingBlock rows={6} /></div> : (
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -34,15 +45,20 @@ export const RadarPage = () => {
                 <dl className="mt-2 grid grid-cols-2 gap-2 text-xs">
                   <div className="rounded border border-slate-700 p-2"><dt className="text-slate-400">Mainstream hits</dt><dd>{card.mainstreamHits}</dd></div>
                   <div className="rounded border border-slate-700 p-2"><dt className="text-slate-400">Alt engagement</dt><dd>{card.altEngagement.toLocaleString()}</dd></div>
-                  <div className="col-span-2 rounded border border-slate-700 p-2"><dt className="text-slate-400">Credibility</dt><dd>{card.credibility}</dd></div>
+                  <div className="rounded border border-slate-700 p-2"><dt className="text-slate-400">X proxy</dt><dd>{card.xEngagement?.toLocaleString() ?? 'n/a'}</dd></div>
+                  <div className="rounded border border-slate-700 p-2"><dt className="text-slate-400">Credibility</dt><dd>{card.credibility}</dd></div>
                 </dl>
-                <a className="mt-2 inline-block text-xs text-cyan-300 underline" href={card.factCheck} target="_blank" rel="noreferrer">Fact-check reference</a>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  {enabledCheckers.map((checker) => (
+                    <a key={checker} className="text-cyan-300 underline" href={checkerLinks[checker]} target="_blank" rel="noreferrer">{checker}</a>
+                  ))}
+                </div>
               </article>
             ))}
           </div>
         )}
 
-        <p className="method-note">Data date: {fetchedAt.slice(0, 10)}. Metric method: scaled rank difference (alternative engagement rank − mainstream citation rank).</p>
+        <p className="method-note">Data date: {fetchedAt.slice(0, 10)}. Metric method: scaled rank difference (alternative engagement rank − mainstream citation rank). X proxy derived from public follower endpoint and used only as coarse scale reference.</p>
         {error && !error.includes('API key missing') && <p className="mt-2 text-xs text-amber-300">{error}</p>}
       </article>
     </section>

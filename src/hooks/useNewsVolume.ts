@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { coverageTimeline } from '../data/mockData';
+import type { OutletConfig } from '../lib/appConfig';
 
 export type NewsArticle = {
   title: string;
@@ -11,12 +12,17 @@ export type NewsArticle = {
 
 type DataPoint = { date: string; Left: number; Center: number; Right: number };
 
-export const useNewsVolume = (topic: string) => {
+export const useNewsVolume = (topic: string, outlets: OutletConfig[]) => {
   const [data, setData] = useState<DataPoint[]>(coverageTimeline);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState(new Date().toISOString());
+
+  const sourceBias = useMemo<Record<string, 'Left' | 'Center' | 'Right'>>(
+    () => Object.fromEntries(outlets.map((o) => [o.name, o.side])) as Record<string, 'Left' | 'Center' | 'Right'>,
+    [outlets]
+  );
 
   const refresh = useCallback(async () => {
     const key = import.meta.env.VITE_NEWSAPI_KEY ?? import.meta.env.VITE_NEWS_API_KEY;
@@ -32,11 +38,6 @@ export const useNewsVolume = (topic: string) => {
     try {
       setLoading(true);
       setError(null);
-      const sourceBias: Record<string, 'Left' | 'Center' | 'Right'> = {
-        CNN: 'Left', MSNBC: 'Left', 'New York Times': 'Left',
-        'Fox News': 'Right', Breitbart: 'Right', 'Daily Wire': 'Right',
-        Reuters: 'Center', 'BBC News': 'Center', 'Associated Press': 'Center',
-      };
       const endpoint = `https://newsapi.org/v2/everything?q=${encodeURIComponent(topic)}&language=en&pageSize=50&sortBy=publishedAt&apiKey=${key}`;
       const response = await fetch(endpoint);
       if (!response.ok) throw new Error(`NewsAPI status ${response.status}`);
@@ -64,7 +65,7 @@ export const useNewsVolume = (topic: string) => {
       setLoading(false);
       setFetchedAt(new Date().toISOString());
     }
-  }, [topic]);
+  }, [topic, sourceBias]);
 
   useEffect(() => {
     void refresh();
