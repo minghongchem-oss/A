@@ -2,62 +2,76 @@
 
 Transparency-first political media analysis tooling. The app intentionally **does not generate forced neutral summaries** and does not editorialize. It exposes mechanics (coverage volume, framing, omission, virality gaps, claim flags) and links sources so users can judge.
 
-## Netlify production architecture (proxy-first)
-The browser **never** calls NewsAPI / GNews / RSS2JSON directly.
-All live requests go through Netlify Functions:
-- `/.netlify/functions/health` (live status + providers)
-- `/.netlify/functions/methodology`
-- `/.netlify/functions/news`
-- `/.netlify/functions/annotate`
-- `/.netlify/functions/radar`
+## Confirmed Working Status
+- ✅ Frontend dev server (`npm run dev`) starts on port `5173`.
+- ✅ Backend dev server (`npm run dev:server`) starts on port `8787`.
+- ✅ Combined mode (`npm run dev:full`) runs both concurrently.
+- ✅ Production build completes (`npm run build`).
 
-## Environment variables
-### Local Vite convenience (optional)
-Used only if you run custom experiments in client-side code:
+## New in this phase
+- Vercel deploy-ready config (`vercel.json`) + serverless API routes in `/api`.
+- User Settings modal:
+  - Fact-checker checkbox controls (PolitiFact / Snopes / FactCheck.org)
+  - Draggable outlet manager (Left / Center / Right) persisted to localStorage
+- Premium placeholders:
+  - Heavy annotation usage upsell banner
+  - Dashboard “Save dashboard (Premium)” button
+  - Premium modal (“coming soon”, no payments)
+- Exposure enhancements:
+  - Dashboard ownership footnote links
+  - Hidden Radar X proxy engagement field (public endpoint fallback)
+
+## Run locally
+
+```bash
+npm install
+npm run dev:full
+```
+
+Open:
+- Frontend: `http://127.0.0.1:5173`
+- Backend: `http://127.0.0.1:8787/health`
+
+## API Keys (.env)
+Copy `.env.example` to `.env` and fill keys:
+
 ```bash
 VITE_NEWSAPI_KEY=
 VITE_GNEWS_KEY=
 VITE_RSS2JSON_KEY=
 ```
 
-### Netlify server-only (required for production live mode)
-Set in Netlify Site settings → Environment variables:
-```bash
-NEWSAPI_KEY=
-GNEWS_KEY=
-RSS2JSON_KEY=
-```
+If a key is missing, UI shows a yellow warning:
+> API key missing — using mock data. Add key to .env to enable live data.
 
-If server-only keys are missing or provider calls fail, UI now shows:
-- `Live fetch failed (...). Using mock data. See details.`
+## Deploy to Vercel
+1. Push this repo to GitHub/GitLab/Bitbucket.
+2. In Vercel, click **Add New Project** and import repo.
+3. Framework preset: **Vite** (auto-detected).
+4. Build command: `npm run build`
+5. Output directory: `dist`
+6. Add environment variables in Vercel Project Settings:
+   - `VITE_NEWSAPI_KEY`
+   - `VITE_GNEWS_KEY`
+   - `VITE_RSS2JSON_KEY`
+7. Deploy.
 
-## Netlify Drop deployment (no CLI / no Git required)
-1. Build locally:
-   ```bash
-   npm install
-   npm run build
-   ```
-2. Upload `dist/` to Netlify Drop.
-3. Ensure `netlify.toml` is included in project root with:
-   - `publish = "dist"`
-   - `functions.directory = "netlify/functions"`
-   - SPA redirect to `/index.html`
-4. Add `NEWSAPI_KEY`, `GNEWS_KEY`, `RSS2JSON_KEY` in Netlify env settings.
-5. Redeploy the site after adding keys.
+### One-click deploy button (replace YOUR_REPO_URL)
+`https://vercel.com/new/clone?repository-url=YOUR_REPO_URL`
 
-## Test checklist
-- Visit `/.netlify/functions/health` → returns `live:true` when at least one server key is set.
-- Refresh Dashboard → timestamp updates and request re-runs (cache busting with `?t=...`).
-- Annotator no longer shows key-missing if health says live mode is active.
-- Hidden Radar loads live cards when RSS2JSON is available.
-
-## Current UI behavior
-- Single shared live/mock status banner across all pages.
-- Explicit per-page fallback details (no silent mock fallback).
-- Refresh buttons issue uncached server calls.
-
-## Screenshot Proof (captured in prior validation)
+## Screenshot Proof (captured during validation)
 - Dashboard: `artifacts/dashboard-new.png`
 - Settings modal: `artifacts/settings-modal.png`
 - Premium modal: `artifacts/premium-modal.png`
 - Mobile dark mode (iPhone 14): `artifacts/mobile-dark.png`
+
+## Feedback
+Open an issue with:
+- which outlet assignments feel off,
+- which fact-checkers to add/remove,
+- and which radar cards need better source links.
+
+## Next Improvements (within same philosophy)
+- User-configurable source lists and transparent bias mapping editor export/import
+- Saved watchlists and virality alerts (premium-gated later)
+- Optional premium gating with actual billing integration (future)

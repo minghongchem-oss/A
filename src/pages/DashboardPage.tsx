@@ -30,11 +30,8 @@ export const DashboardPage = ({ config, onPromptPremium }: Props) => {
 
   return (
     <section className="space-y-4">
-      {!!volume.error && (
-        <details className="rounded-xl border border-amber-500/70 bg-amber-500/15 p-3 text-sm text-amber-100">
-          <summary>Live fetch failed. Using mock data. See details.</summary>
-          <p className="mt-2">{volume.error}</p>
-        </details>
+      {!!volume.error && volume.error.includes('API key missing') && (
+        <div className="rounded-xl border border-amber-500/70 bg-amber-500/15 p-3 text-sm text-amber-100">{volume.error}</div>
       )}
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-sm text-cyan-100">
         <div>
@@ -67,7 +64,7 @@ export const DashboardPage = ({ config, onPromptPremium }: Props) => {
             </div>
           )}
           <p className="method-note">Sources: NewsAPI + user-configurable outlet cohorts (saved locally). Data date: {volume.fetchedAt.slice(0, 10)}.</p>
-          
+          {volume.error && !volume.error.includes('API key missing') && <p className="mt-2 text-xs text-amber-300">{volume.error}</p>}
         </article>
 
         <article className="chart-card">

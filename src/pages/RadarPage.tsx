@@ -22,12 +22,7 @@ export const RadarPage = ({ config }: Props) => {
         <p className="mt-1 text-red-100/90">Sort order = virality gap descending. <a href="#" className="underline">Report inaccurate card</a></p>
       </div>
 
-      {error && (
-        <details className="rounded-lg border border-amber-500/70 bg-amber-500/15 p-2 text-xs text-amber-100">
-          <summary>Live fetch failed. Using mock data. See details.</summary>
-          <p className="mt-1">{error}</p>
-        </details>
-      )}
+      {error?.includes('API key missing') && <div className="rounded-lg border border-amber-500/70 bg-amber-500/15 p-2 text-xs text-amber-100">{error}</div>}
 
       <article className="chart-card">
         <div className="flex items-center justify-between">
@@ -64,7 +59,7 @@ export const RadarPage = ({ config }: Props) => {
         )}
 
         <p className="method-note">Data date: {fetchedAt.slice(0, 10)}. Metric method: scaled rank difference (alternative engagement rank − mainstream citation rank). X proxy derived from public follower endpoint and used only as coarse scale reference.</p>
-        
+        {error && !error.includes('API key missing') && <p className="mt-2 text-xs text-amber-300">{error}</p>}
       </article>
     </section>
   );

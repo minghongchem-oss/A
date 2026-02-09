@@ -3,7 +3,6 @@ import { Footer } from './components/Footer';
 import { Navbar, type AppTab } from './components/Navbar';
 import { PremiumModal } from './components/PremiumModal';
 import { SettingsModal } from './components/SettingsModal';
-import { useLiveStatus } from './hooks/useLiveStatus';
 import { defaultConfig, configStorageKey, type AppConfig } from './lib/appConfig';
 import { AnnotatorPage } from './pages/AnnotatorPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -16,7 +15,6 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [premiumOpen, setPremiumOpen] = useState(false);
   const [config, setConfig] = useState<AppConfig>(defaultConfig);
-  const liveStatus = useLiveStatus();
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -54,17 +52,6 @@ function App() {
         onOpenSettings={() => setSettingsOpen(true)}
       />
       <main className="mx-auto max-w-6xl px-4 py-5">
-        <div className={`mb-4 rounded-xl border p-3 text-xs ${liveStatus.status.live ? 'border-emerald-500/70 bg-emerald-500/10 text-emerald-100' : 'border-amber-500/70 bg-amber-500/10 text-amber-100'}`}>
-          <div className="flex items-center justify-between gap-2">
-            <p>
-              {liveStatus.status.live ? 'Live data mode active.' : 'Mock data mode active.'} {liveStatus.status.message}
-              {' '}Providers: newsapi={String(liveStatus.status.providers.newsapi)}, gnews={String(liveStatus.status.providers.gnews)}, rss2json={String(liveStatus.status.providers.rss2json)}.
-            </p>
-            <button className="rounded border border-slate-600 px-2 py-1" onClick={() => void liveStatus.refresh()}>Refresh status</button>
-          </div>
-          {(liveStatus.error || liveStatus.loading) && <p className="mt-1">{liveStatus.loading ? 'Checking live status...' : `Status check failed: ${liveStatus.error}`}</p>}
-        </div>
-
         {showSplash && (
           <section className="mb-4 rounded-2xl border border-cyan-500/40 bg-cyan-500/10 p-4">
             <div className="flex items-start justify-between gap-4">
