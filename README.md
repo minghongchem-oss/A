@@ -1,62 +1,48 @@
-# Unspun Politics (BiasLens / RawSignal) MVP
+# Tuxun-Play
 
-A transparency-first political media analysis tool. This MVP intentionally avoids forced neutral summaries and editorial voice. It provides raw comparative tooling so users can inspect coverage amplification, omission, framing, and credibility signals themselves.
+GeoGuessr-like 图寻 Web 应用（Next.js 14 + TypeScript）。默认中文 UI，预留英文 i18n。
 
-## Stack
-- React + Vite + TypeScript
-- Tailwind CSS (shadcn-style utility primitives)
-- Recharts for charting
-- Public API integrations (NewsAPI, GNews, RSS2JSON) with mock-first fallbacks
+## 功能概览
+- 经典 / 每日 / 国家连胜 / 限时模式
+- 自定义地图包与排行榜
+- 账号系统（NextAuth，游客可玩）
+- 可插拔街景 Provider（Mapillary + Tencent + Mock）
+- Battle Royale（Socket.IO 独立 realtime 服务）
+- 安全策略：服务端计算分数、输入校验、基础限流、CSP
 
-## Implemented MVP Features
+## 本地运行
+1. `pnpm i`
+2. 复制环境变量：`cp .env.example .env`
+3. 准备数据库并迁移：
+   - `pnpm prisma:generate`
+   - `pnpm prisma:migrate`
+   - `pnpm prisma:seed`
+4. （可选）启动多人实时服务：`pnpm realtime:dev`
+5. 启动前端：`pnpm dev`
 
-### 1) Bias Dashboard
-- Coverage volume timeline (Left / Center / Right buckets)
-- Framing term intensity chart
-- Omission radar + asymmetry pie
-- Engagement vs reliability scatter
-- Methodology and source links on-page
+## 测试与构建
+- 单元测试：`pnpm test`
+- E2E smoke：`pnpm test:e2e`
+- 生产构建：`pnpm build`
 
-### 2) Article Annotator
-- URL/text input box
-- Mock inline annotation rendering (contested claims + loaded framing)
-- Sidebar with alternative headlines and ownership snippets
-- Fact-check panel with live GNews-powered lookup fallback
+## 部署
+### Vercel + Postgres
+- 在 Vercel 配置 `.env.example` 中变量。
+- 绑定托管 Postgres（Neon/Supabase/RDS）。
+- 部署后执行 Prisma migration。
+- 如果使用腾讯/Mapillary，填入对应 key/token。
 
-### 3) Hidden News Radar
-- Virality-gap sorted feed cards
-- Heavy warning disclaimer banner
-- Credibility badges + fact-check placeholders
-- Mock feed + optional Reuters RSS bridge via RSS2JSON API
+### Realtime 服务（Fly.io/Render）
+- `realtime-server/` 为独立 Node 服务。
+- 部署后设置 `NEXT_PUBLIC_REALTIME_URL` 指向该服务。
 
-## Getting Started
+## Provider 扩展
+1. 在 `lib/types.ts` 扩展 `ProviderId`。
+2. 在 `lib/providers/` 新建实现 `StreetViewProvider` 的类。
+3. 在 `lib/providers/index.ts` 注入选择逻辑。
+4. 新增 viewer 组件并在 `components/game/GameShell.tsx` 按 `providerId` 渲染。
 
-```bash
-npm install
-npm run dev
-```
-
-Then open `http://localhost:5173`.
-
-## Environment Variables
-Copy `.env.example` to `.env` and add keys as available:
-
-```bash
-VITE_NEWS_API_KEY=
-VITE_GNEWS_API_KEY=
-VITE_RSS2JSON_API_KEY=
-```
-
-Without keys, the app still runs fully with curated mock data and explanatory warnings.
-
-## Radical Transparency Rules in this MVP
-- Every major section includes source or methodology notes.
-- No auto-generated “balanced” rewrite summaries.
-- Data timestamps and upstream source links are visible.
-
-## Future Roadmap
-- Expand bias-source mapping with a versioned public methodology file.
-- Topic drill-down interactions and historical compare mode.
-- Improved claim extraction + sentence-level annotation engine.
-- Supabase auth and saved personal watchlists.
-- Alerting for sharp virality-gap spikes.
+## 安全与合规说明
+- 真值坐标只在提交猜测后由服务端返回。
+- 腾讯密钥仅服务器端代理使用，不下发到浏览器。
+- 每回合展示影像和地图 attribution；请遵守第三方 API/影像许可。

@@ -1,0 +1,7 @@
+[
+  {"providerId":"mock","sceneId":"mock-1","lat":35.6586,"lng":139.7454,"country":"JP","image":"https://picsum.photos/seed/tuxun1/1200/700"},
+  {"providerId":"mock","sceneId":"mock-2","lat":48.8583,"lng":2.2945,"country":"FR","image":"https://picsum.photos/seed/tuxun2/1200/700"},
+  {"providerId":"mock","sceneId":"mock-3","lat":40.6892,"lng":-74.0445,"country":"US","image":"https://picsum.photos/seed/tuxun3/1200/700"},
+  {"providerId":"mock","sceneId":"mock-4","lat":31.2304,"lng":121.4737,"country":"CN","image":"https://picsum.photos/seed/tuxun4/1200/700"},
+  {"providerId":"mock","sceneId":"mock-5","lat":-33.8568,"lng":151.2153,"country":"AU","image":"https://picsum.photos/seed/tuxun5/1200/700"}
+]

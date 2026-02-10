@@ -1,8 +1,8 @@
 node_modules
-.DS_Store
+.next
+pnpm-lock.yaml
 .env
-.env.*
-!.env.example
-dist
+.env.local
+playwright-report
+test-results
 coverage
-*.log
