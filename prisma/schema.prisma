@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GameMode {
+  CLASSIC
+  DAILY
+  STREAK
+  TIMETRIAL
+  PACK
+  BATTLE
+}
+
+enum PackVisibility {
+  PRIVATE
+  UNLISTED
+  PUBLIC
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  passwordHash  String?
+  emailVerified DateTime?
+  image         String?
+  role          String    @default("user")
+  accounts      Account[]
+  sessions      Session[]
+  gameRuns      GameRun[]
+  packs         Pack[]
+  createdAt     DateTime  @default(now())
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Pack {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  name        String
+  description String
+  visibility  PackVisibility @default(PRIVATE)
+  regionIds   String[]
+  ownerId     String
+  owner       User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  locations   PackLocation[]
+  runs        GameRun[]
+  createdAt   DateTime       @default(now())
+}
+
+model PackLocation {
+  id         String  @id @default(cuid())
+  packId      String
+  providerId  String
+  sceneId     String?
+  lat         Float
+  lng         Float
+  payloadJson Json?
+  pack        Pack    @relation(fields: [packId], references: [id], onDelete: Cascade)
+}
+
+model GameRun {
+  id            String        @id @default(cuid())
+  mode          GameMode
+  userId        String?
+  guestId       String?
+  seed          String?
+  packId        String?
+  startedAt     DateTime      @default(now())
+  endedAt       DateTime?
+  totalScore    Int           @default(0)
+  totalDistance Float         @default(0)
+  rounds        RoundResult[]
+  user          User?         @relation(fields: [userId], references: [id])
+  pack          Pack?         @relation(fields: [packId], references: [id])
+}
+
+model RoundResult {
+  id         String   @id @default(cuid())
+  runId       String
+  idx         Int
+  providerId  String
+  sceneId     String
+  guessLat    Float?
+  guessLng    Float?
+  trueLat     Float
+  trueLng     Float
+  distanceKm  Float?
+  score       Int?
+  countryCode String?
+  run         GameRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, idx])
+}

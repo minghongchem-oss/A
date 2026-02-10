@@ -1,0 +1,21 @@
+-- Generated baseline migration
+CREATE TYPE "GameMode" AS ENUM ('CLASSIC', 'DAILY', 'STREAK', 'TIMETRIAL', 'PACK', 'BATTLE');
+CREATE TYPE "PackVisibility" AS ENUM ('PRIVATE', 'UNLISTED', 'PUBLIC');
+CREATE TABLE "User" ("id" TEXT PRIMARY KEY, "name" TEXT, "email" TEXT UNIQUE, "passwordHash" TEXT, "emailVerified" TIMESTAMP(3), "image" TEXT, "role" TEXT NOT NULL DEFAULT 'user', "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "Account" ("id" TEXT PRIMARY KEY, "userId" TEXT NOT NULL, "type" TEXT NOT NULL, "provider" TEXT NOT NULL, "providerAccountId" TEXT NOT NULL, "refresh_token" TEXT, "access_token" TEXT, "expires_at" INTEGER, "token_type" TEXT, "scope" TEXT, "id_token" TEXT, "session_state" TEXT);
+CREATE TABLE "Session" ("id" TEXT PRIMARY KEY, "sessionToken" TEXT NOT NULL UNIQUE, "userId" TEXT NOT NULL, "expires" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "VerificationToken" ("identifier" TEXT NOT NULL, "token" TEXT NOT NULL UNIQUE, "expires" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "Pack" ("id" TEXT PRIMARY KEY, "slug" TEXT NOT NULL UNIQUE, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "visibility" "PackVisibility" NOT NULL DEFAULT 'PRIVATE', "regionIds" TEXT[] NOT NULL, "ownerId" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "PackLocation" ("id" TEXT PRIMARY KEY, "packId" TEXT NOT NULL, "providerId" TEXT NOT NULL, "sceneId" TEXT, "lat" DOUBLE PRECISION NOT NULL, "lng" DOUBLE PRECISION NOT NULL, "payloadJson" JSONB);
+CREATE TABLE "GameRun" ("id" TEXT PRIMARY KEY, "mode" "GameMode" NOT NULL, "userId" TEXT, "guestId" TEXT, "seed" TEXT, "packId" TEXT, "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "endedAt" TIMESTAMP(3), "totalScore" INTEGER NOT NULL DEFAULT 0, "totalDistance" DOUBLE PRECISION NOT NULL DEFAULT 0);
+CREATE TABLE "RoundResult" ("id" TEXT PRIMARY KEY, "runId" TEXT NOT NULL, "idx" INTEGER NOT NULL, "providerId" TEXT NOT NULL, "sceneId" TEXT NOT NULL, "guessLat" DOUBLE PRECISION, "guessLng" DOUBLE PRECISION, "trueLat" DOUBLE PRECISION NOT NULL, "trueLng" DOUBLE PRECISION NOT NULL, "distanceKm" DOUBLE PRECISION, "score" INTEGER, "countryCode" TEXT);
+ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE;
+ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE;
+ALTER TABLE "Pack" ADD CONSTRAINT "Pack_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE;
+ALTER TABLE "PackLocation" ADD CONSTRAINT "PackLocation_packId_fkey" FOREIGN KEY ("packId") REFERENCES "Pack"("id") ON DELETE CASCADE;
+ALTER TABLE "GameRun" ADD CONSTRAINT "GameRun_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL;
+ALTER TABLE "GameRun" ADD CONSTRAINT "GameRun_packId_fkey" FOREIGN KEY ("packId") REFERENCES "Pack"("id") ON DELETE SET NULL;
+ALTER TABLE "RoundResult" ADD CONSTRAINT "RoundResult_runId_fkey" FOREIGN KEY ("runId") REFERENCES "GameRun"("id") ON DELETE CASCADE;
+CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationToken"("identifier", "token");
+CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provider", "providerAccountId");
+CREATE UNIQUE INDEX "RoundResult_runId_idx_key" ON "RoundResult"("runId", "idx");
