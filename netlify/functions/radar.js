@@ -1,5 +1,3 @@
-const { writeStatus } = require('./_statusStore');
-
 const json = (statusCode, body) => ({
   statusCode,
   headers: { 'cache-control': 'no-store', 'content-type': 'application/json' },
@@ -22,12 +20,9 @@ exports.handler = async function () {
   const xFollowers = await getXProxy();
 
   if (!rssKey) {
-    const status = writeStatus('mock', 'RSS2JSON_KEY missing');
     return json(200, {
       live: false,
-      provider: 'mock',
-      fallbackReason: 'RSS2JSON_KEY missing',
-      ...status,
+      provider: null,
       fetchedAt: new Date().toISOString(),
       cards: [],
       xFollowers,
@@ -39,7 +34,7 @@ exports.handler = async function () {
     const feeds = ['https://www.reuters.com/world/us/politics/rss', 'https://feeds.feedburner.com/Talking-Points-Memo'];
     const cards = [];
     for (const feed of feeds) {
-      const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}&api_key=${rssKey}&t=${Date.now()}`);
+      const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}&api_key=${rssKey}`);
       if (!response.ok) {
         const text = await response.text();
         throw new Error(`RSS2JSON ${response.status}: ${text.slice(0, 200)}`);
@@ -62,28 +57,21 @@ exports.handler = async function () {
       });
     }
 
-    const status = writeStatus('rss2json', 'RSS2JSON radar success');
     return json(200, {
       live: true,
       provider: 'rss2json',
-      fallbackReason: null,
-      ...status,
       fetchedAt: new Date().toISOString(),
       cards,
       xFollowers,
     });
   } catch (error) {
-    const reason = String(error).slice(0, 300);
-    const status = writeStatus('mock', reason);
     return json(200, {
       live: false,
-      provider: 'mock',
-      fallbackReason: reason,
-      ...status,
+      provider: 'rss2json',
       fetchedAt: new Date().toISOString(),
       cards: [],
       xFollowers,
-      error: `Live fetch failed (${reason})`,
+      error: `Live fetch failed (${String(error).slice(0, 300)})`,
     });
   }
 };

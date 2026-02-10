@@ -7,9 +7,6 @@ export type LiveStatus = {
     gnews: boolean;
     rss2json: boolean;
   };
-  preferredProvider: 'newsapi' | 'gnews' | 'rss2json' | 'mock';
-  lastProvider: 'newsapi' | 'gnews' | 'rss2json' | 'mock';
-  lastReason: string;
   lastFetch: string;
   message: string;
 };
@@ -17,9 +14,6 @@ export type LiveStatus = {
 const fallback: LiveStatus = {
   live: false,
   providers: { newsapi: false, gnews: false, rss2json: false },
-  preferredProvider: 'mock',
-  lastProvider: 'mock',
-  lastReason: 'Status unavailable.',
   lastFetch: new Date().toISOString(),
   message: 'Status unavailable. Assuming mock mode.',
 };
@@ -38,9 +32,6 @@ export const useLiveStatus = () => {
       setStatus({
         live: Boolean(payload.live),
         providers: payload.providers ?? fallback.providers,
-        preferredProvider: payload.preferredProvider ?? 'mock',
-        lastProvider: payload.lastProvider ?? 'mock',
-        lastReason: payload.lastReason ?? 'No reason supplied.',
         lastFetch: payload.lastFetch ?? new Date().toISOString(),
         message: payload.message ?? 'Status loaded.',
       });

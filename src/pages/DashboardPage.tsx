@@ -30,16 +30,13 @@ export const DashboardPage = ({ config, onPromptPremium }: Props) => {
 
   return (
     <section className="space-y-4">
-      {!!volume.error && (
-        <details className="rounded-xl border border-amber-500/70 bg-amber-500/15 p-3 text-sm text-amber-100">
-          <summary>Live fetch failed. Using mock data. See details.</summary>
-          <p className="mt-2">{volume.error}</p>
-        </details>
+      {!!volume.error && volume.error.includes('API key missing') && (
+        <div className="rounded-xl border border-amber-500/70 bg-amber-500/15 p-3 text-sm text-amber-100">{volume.error}</div>
       )}
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-4 text-sm text-cyan-100">
         <div>
           <p className="font-medium">Topic focus: {selectedTopic}</p>
-          <p className="mt-1 text-cyan-50/90">Data source: <strong>{volume.source.toUpperCase()}</strong>{volume.reason ? ` · ${volume.reason}` : ''}</p>
+          <p className="mt-1 text-cyan-50/90">Interactive charts: click Left/Center/Right legend in timeline card to open source links.</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => void volume.refresh()} className="rounded-lg bg-cyan-500 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-cyan-400">Refresh data</button>
@@ -66,15 +63,32 @@ export const DashboardPage = ({ config, onPromptPremium }: Props) => {
               </ResponsiveContainer>
             </div>
           )}
-          <p className="method-note">Sources: Netlify proxy → NewsAPI/RSS2JSON/GNews fallback chain. Data date: {volume.fetchedAt.slice(0, 19)}.</p>
+          <p className="method-note">Sources: NewsAPI + user-configurable outlet cohorts (saved locally). Data date: {volume.fetchedAt.slice(0, 10)}.</p>
+          {volume.error && !volume.error.includes('API key missing') && <p className="mt-2 text-xs text-amber-300">{volume.error}</p>}
         </article>
 
-        <article className="chart-card"><h2 className="text-sm font-semibold">Framing term intensity (proxy heatmap)</h2><div className="mt-3 h-64 w-full"><ResponsiveContainer><BarChart data={framingTerms}><CartesianGrid strokeDasharray="3 3" stroke="#334155" /><XAxis dataKey="term" stroke="#cbd5e1" tick={{ fontSize: 11 }} /><YAxis stroke="#cbd5e1" /><Tooltip /><Legend /><Bar dataKey="Left" fill="#22d3ee" /><Bar dataKey="Center" fill="#94a3b8" /><Bar dataKey="Right" fill="#f97316" /></BarChart></ResponsiveContainer></div><p className="method-note">Method: loaded-term frequency in sampled headlines/ledes per outlet cohort.</p></article>
-        <article className="chart-card"><h2 className="text-sm font-semibold">Omission radar + asymmetry pie</h2><div className="mt-3 grid gap-2 sm:grid-cols-2"><div className="h-60"><ResponsiveContainer><RadarChart data={omissionRadar}><PolarGrid /><PolarAngleAxis dataKey="topic" tick={{ fontSize: 10 }} /><Radar name="Left" dataKey="Left" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.3} /><Radar name="Right" dataKey="Right" stroke="#f97316" fill="#f97316" fillOpacity={0.25} /><Legend /></RadarChart></ResponsiveContainer></div><div className="h-60"><ResponsiveContainer><PieChart><Pie data={pieData} dataKey="value" nameKey="name" outerRadius={85} fill="#14b8a6" label /><Tooltip /></PieChart></ResponsiveContainer></div></div><p className="method-note">Omission score = |left coverage - right coverage| in same 7-day window.</p></article>
-        <article className="chart-card"><h2 className="text-sm font-semibold">Engagement vs reliability scatter</h2><div className="mt-3 h-64 w-full"><ResponsiveContainer><ScatterChart><CartesianGrid stroke="#334155" /><XAxis type="number" dataKey="reliability" unit="%" stroke="#cbd5e1" /><YAxis type="number" dataKey="engagement" unit="pts" stroke="#cbd5e1" /><Tooltip cursor={{ strokeDasharray: '3 3' }} /><Scatter name="Stories" data={reliabilityScatter} fill="#38bdf8" /></ScatterChart></ResponsiveContainer></div><p className="method-note">Reliability: MBFC/AllSides-style proxy. Engagement: social mention/index proxy.</p></article>
+        <article className="chart-card">
+          <h2 className="text-sm font-semibold">Framing term intensity (proxy heatmap)</h2>
+          <div className="mt-3 h-64 w-full"><ResponsiveContainer><BarChart data={framingTerms}><CartesianGrid strokeDasharray="3 3" stroke="#334155" /><XAxis dataKey="term" stroke="#cbd5e1" tick={{ fontSize: 11 }} /><YAxis stroke="#cbd5e1" /><Tooltip /><Legend /><Bar dataKey="Left" fill="#22d3ee" /><Bar dataKey="Center" fill="#94a3b8" /><Bar dataKey="Right" fill="#f97316" /></BarChart></ResponsiveContainer></div>
+          <p className="method-note">Method: loaded-term frequency in sampled headlines/ledes per outlet cohort.</p>
+        </article>
+
+        <article className="chart-card">
+          <h2 className="text-sm font-semibold">Omission radar + asymmetry pie</h2>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2"><div className="h-60"><ResponsiveContainer><RadarChart data={omissionRadar}><PolarGrid /><PolarAngleAxis dataKey="topic" tick={{ fontSize: 10 }} /><Radar name="Left" dataKey="Left" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.3} /><Radar name="Right" dataKey="Right" stroke="#f97316" fill="#f97316" fillOpacity={0.25} /><Legend /></RadarChart></ResponsiveContainer></div><div className="h-60"><ResponsiveContainer><PieChart><Pie data={pieData} dataKey="value" nameKey="name" outerRadius={85} fill="#14b8a6" label /><Tooltip /></PieChart></ResponsiveContainer></div></div>
+          <p className="method-note">Omission score = |left coverage - right coverage| in same 7-day window.</p>
+        </article>
+
+        <article className="chart-card">
+          <h2 className="text-sm font-semibold">Engagement vs reliability scatter</h2>
+          <div className="mt-3 h-64 w-full"><ResponsiveContainer><ScatterChart><CartesianGrid stroke="#334155" /><XAxis type="number" dataKey="reliability" unit="%" stroke="#cbd5e1" /><YAxis type="number" dataKey="engagement" unit="pts" stroke="#cbd5e1" /><Tooltip cursor={{ strokeDasharray: '3 3' }} /><Scatter name="Stories" data={reliabilityScatter} fill="#38bdf8" /></ScatterChart></ResponsiveContainer></div>
+          <p className="method-note">Reliability: MBFC/AllSides-style proxy. Engagement: social mention/index proxy.</p>
+        </article>
       </div>
 
-      <div className="rounded-xl border border-slate-700 bg-slate-900/50 p-3 text-xs text-slate-300">Methodology + source links: <a className="text-cyan-300 underline" href="https://newsapi.org" target="_blank" rel="noreferrer">NewsAPI</a>, <a className="text-cyan-300 underline" href="https://www.allsides.com/media-bias" target="_blank" rel="noreferrer">AllSides</a>, <a className="text-cyan-300 underline" href="https://mediabiasfactcheck.com" target="_blank" rel="noreferrer">Media Bias/Fact Check</a>. Ownership references: <a className="text-cyan-300 underline" href="https://www.axios.com/2024/11/01/media-ownership-map" target="_blank" rel="noreferrer">Media ownership map</a>, <a className="text-cyan-300 underline" href="https://www.fcc.gov/media/ownership" target="_blank" rel="noreferrer">FCC ownership resources</a>.</div>
+      <div className="rounded-xl border border-slate-700 bg-slate-900/50 p-3 text-xs text-slate-300">
+        Methodology + source links: <a className="text-cyan-300 underline" href="https://newsapi.org" target="_blank" rel="noreferrer">NewsAPI</a>, <a className="text-cyan-300 underline" href="https://www.allsides.com/media-bias" target="_blank" rel="noreferrer">AllSides</a>, <a className="text-cyan-300 underline" href="https://mediabiasfactcheck.com" target="_blank" rel="noreferrer">Media Bias/Fact Check</a>. Ownership references: <a className="text-cyan-300 underline" href="https://www.axios.com/2024/11/01/media-ownership-map" target="_blank" rel="noreferrer">Media ownership map</a>, <a className="text-cyan-300 underline" href="https://www.fcc.gov/media/ownership" target="_blank" rel="noreferrer">FCC ownership resources</a>.
+      </div>
 
       {selectedSide && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4" onClick={() => setSelectedSide(null)}>

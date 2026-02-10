@@ -12,7 +12,7 @@ const checkerLinks: Record<string, string> = {
 };
 
 export const RadarPage = ({ config }: Props) => {
-  const { cards, loading, error, fetchedAt, source, reason, refresh } = useRadarFeed();
+  const { cards, loading, error, fetchedAt, refresh } = useRadarFeed();
   const enabledCheckers = Object.entries(config.factCheckers).filter(([, enabled]) => enabled).map(([name]) => name);
 
   return (
@@ -22,19 +22,14 @@ export const RadarPage = ({ config }: Props) => {
         <p className="mt-1 text-red-100/90">Sort order = virality gap descending. <a href="#" className="underline">Report inaccurate card</a></p>
       </div>
 
-      {error && (
-        <details className="rounded-lg border border-amber-500/70 bg-amber-500/15 p-2 text-xs text-amber-100">
-          <summary>Live fetch failed. Using mock data. See details.</summary>
-          <p className="mt-1">{error}</p>
-        </details>
-      )}
+      {error?.includes('API key missing') && <div className="rounded-lg border border-amber-500/70 bg-amber-500/15 p-2 text-xs text-amber-100">{error}</div>}
 
       <article className="chart-card">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">Hidden News Radar feed</h2>
           <button onClick={() => void refresh()} className="rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-slate-950">Refresh data</button>
         </div>
-        <p className="mt-1 text-xs text-slate-300">Data source: <strong>{source.toUpperCase()}</strong>{reason ? ` · ${reason}` : ''}</p>
+        <p className="mt-1 text-xs text-slate-300">Includes curated undercovered cards + optional RSS pull + public X follower-derived proxy.</p>
 
         {loading ? <div className="mt-4"><LoadingBlock rows={6} /></div> : (
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -63,7 +58,8 @@ export const RadarPage = ({ config }: Props) => {
           </div>
         )}
 
-        <p className="method-note">Data date: {fetchedAt.slice(0, 19)}. Metric method: scaled rank difference (alternative engagement rank − mainstream citation rank). X proxy derived from public follower endpoint and used only as coarse scale reference.</p>
+        <p className="method-note">Data date: {fetchedAt.slice(0, 10)}. Metric method: scaled rank difference (alternative engagement rank − mainstream citation rank). X proxy derived from public follower endpoint and used only as coarse scale reference.</p>
+        {error && !error.includes('API key missing') && <p className="mt-2 text-xs text-amber-300">{error}</p>}
       </article>
     </section>
   );

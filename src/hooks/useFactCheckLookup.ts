@@ -12,30 +12,33 @@ export const useFactCheckLookup = (query: string) => {
   const [data, setData] = useState<FactCheckItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [source, setSource] = useState<'gnews' | 'mock'>('mock');
-  const [reason, setReason] = useState('Using mock labels.');
 
   useEffect(() => {
     const run = async () => {
       if (!query.trim()) return;
+      const apiKey = import.meta.env.VITE_GNEWS_KEY ?? import.meta.env.VITE_GNEWS_API_KEY;
+      if (!apiKey) {
+        setError('API key missing — using mock data. Add key to .env to enable live data.');
+        setData([]);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`/.netlify/functions/annotate?query=${encodeURIComponent(query)}&t=${Date.now()}`);
-        if (!response.ok) throw new Error(`Proxy status ${response.status}`);
-        const payload: { live: boolean; provider: 'gnews' | 'mock'; fallbackReason?: string; items: FactCheckItem[]; error?: string } = await response.json();
+        const response = await fetch(`https://gnews.io/api/v4/search?q=${encodeURIComponent(`${query} fact check`)}` + `&lang=en&max=6&apikey=${apiKey}`);
+        if (!response.ok) throw new Error(`GNews status ${response.status}`);
+        const payload: { articles: Array<{ title: string; url: string; publishedAt: string; source: { name: string } }> } = await response.json();
 
-        setSource(payload.live ? payload.provider : 'mock');
-        setReason(payload.fallbackReason || (payload.live ? 'GNews live lookup.' : 'Using mock labels.'));
-        setData(payload.live ? payload.items : []);
-        if (!payload.live) {
-          setError(payload.error ? `${payload.error} Using mock data.` : 'Live annotate unavailable. Using mock data.');
-        }
+        setData(payload.articles.map((item, idx) => ({
+          claim: item.title,
+          claimant: item.source.name,
+          reviewDate: item.publishedAt.slice(0, 10),
+          textualRating: ['Needs manual verification', 'Mixed signal', 'Unrated'][idx % 3],
+          url: item.url,
+        })));
       } catch (err) {
-        setSource('mock');
-        setReason('Proxy request failed.');
-        setData([]);
-        setError(`Live fetch failed (${(err as Error).message}). Using mock data.`);
+        setError((err as Error).message);
       } finally {
         setLoading(false);
       }
@@ -44,5 +47,5 @@ export const useFactCheckLookup = (query: string) => {
     void run();
   }, [query]);
 
-  return { data, loading, error, source, reason };
+  return { data, loading, error };
 };

@@ -35,14 +35,9 @@ export const AnnotatorPage = ({ config, onPromptPremium }: Props) => {
   return (
     <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
       <article className="chart-card">
-        {factCheck.error && (
-          <details className="mb-3 rounded-lg border border-amber-500/70 bg-amber-500/15 p-2 text-xs text-amber-100">
-            <summary>Live fetch failed. Using mock data. See details.</summary>
-            <p className="mt-1">{factCheck.error}</p>
-          </details>
-        )}
+        {factCheck.error?.includes('API key missing') && <div className="mb-3 rounded-lg border border-amber-500/70 bg-amber-500/15 p-2 text-xs text-amber-100">{factCheck.error}</div>}
         <h2 className="text-sm font-semibold">Article Annotator</h2>
-        <p className="mt-1 text-xs text-slate-300">Data source: <strong>{factCheck.source.toUpperCase()}</strong>{factCheck.reason ? ` · ${factCheck.reason}` : ''}</p>
+        <p className="mt-1 text-xs text-slate-300">Paste URL or text. This page highlights contested framing and surfaces external fact-check references.</p>
 
         <form className="mt-3 space-y-2" onSubmit={(event) => { event.preventDefault(); setSubmitted(input); setAnalyzeCount((v) => v + 1); }}>
           <textarea value={input} onChange={(event) => setInput(event.target.value)} className="min-h-20 w-full rounded-xl border border-slate-700 bg-slate-950/70 p-2 text-sm" placeholder="Paste article URL or text" />
@@ -111,10 +106,11 @@ export const AnnotatorPage = ({ config, onPromptPremium }: Props) => {
                   <p className="font-medium">{item.claim}</p>
                   <p className="text-slate-400">{item.claimant} · {item.reviewDate} · {item.textualRating}</p>
                 </a>
-              )) : <p className="text-slate-300">No live data yet. Add server key for live claim lookups.</p>}
+              )) : <p className="text-slate-300">No live data yet. Add API key for live claim lookups.</p>}
             </div>
           )}
-          <p className="method-note">Sources: Netlify annotate proxy + active checkers ({enabledCheckers.join(', ') || 'none selected'}).</p>
+          {factCheck.error && !factCheck.error.includes('API key missing') && <p className="mt-2 text-xs text-amber-300">{factCheck.error}</p>}
+          <p className="method-note">Sources: GNews index + active checkers ({enabledCheckers.join(', ') || 'none selected'}).</p>
         </article>
       </aside>
     </section>

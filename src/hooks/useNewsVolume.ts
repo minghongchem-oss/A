@@ -18,8 +18,6 @@ export const useNewsVolume = (topic: string, outlets: OutletConfig[]) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState(new Date().toISOString());
-  const [source, setSource] = useState<'newsapi' | 'rss2json' | 'gnews' | 'mock'>('mock');
-  const [reason, setReason] = useState<string>('Using mock baseline.');
 
   const sourceBias = useMemo<Record<string, 'Left' | 'Center' | 'Right'>>(
     () => Object.fromEntries(outlets.map((o) => [o.name, o.side])) as Record<string, 'Left' | 'Center' | 'Right'>,
@@ -27,47 +25,45 @@ export const useNewsVolume = (topic: string, outlets: OutletConfig[]) => {
   );
 
   const refresh = useCallback(async () => {
+    const key = import.meta.env.VITE_NEWSAPI_KEY ?? import.meta.env.VITE_NEWS_API_KEY;
+    if (!key) {
+      setData(coverageTimeline);
+      setArticles([]);
+      setError('API key missing — using mock data. Add key to .env to enable live data.');
+      setLoading(false);
+      setFetchedAt(new Date().toISOString());
+      return;
+    }
+
     try {
       setLoading(true);
-      const response = await fetch(`/.netlify/functions/news?topic=${encodeURIComponent(topic)}&t=${Date.now()}`);
-      if (!response.ok) throw new Error(`Proxy status ${response.status}`);
-      const payload: {
-        live: boolean;
-        provider: 'newsapi' | 'rss2json' | 'gnews' | 'mock';
-        fallbackReason?: string | null;
-        fetchedAt: string;
-        articles: Array<{ title: string; url: string; source: string; publishedAt: string; sideHint?: 'Left' | 'Center' | 'Right' }>;
-        error?: string;
-      } = await response.json();
+      setError(null);
+      const endpoint = `https://newsapi.org/v2/everything?q=${encodeURIComponent(topic)}&language=en&pageSize=50&sortBy=publishedAt&apiKey=${key}`;
+      const response = await fetch(endpoint);
+      if (!response.ok) throw new Error(`NewsAPI status ${response.status}`);
+      const payload: { articles: Array<{ title: string; url: string; publishedAt: string; source: { name: string } }> } = await response.json();
 
       const grouped = new Map<string, { Left: number; Center: number; Right: number }>();
-      const mappedArticles: NewsArticle[] = (payload.articles ?? []).slice(0, 40).map((article) => {
-        const side = article.sideHint ?? sourceBias[article.source] ?? 'Center';
-        const day = (article.publishedAt || '').slice(0, 10);
+      const mappedArticles: NewsArticle[] = payload.articles.slice(0, 25).map((article) => {
+        const side = sourceBias[article.source.name] ?? 'Center';
+        const day = article.publishedAt.slice(0, 10);
         const current = grouped.get(day) ?? { Left: 0, Center: 0, Right: 0 };
         current[side] += 1;
         grouped.set(day, current);
-        return { title: article.title, url: article.url, source: article.source, date: day, side };
+        return { title: article.title, url: article.url, source: article.source.name, date: day, side };
       });
 
       const transformed = [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, c]) => ({ date, ...c }));
-      const useLiveDataset = payload.live && transformed.length > 2;
-
-      setSource(useLiveDataset ? payload.provider : 'mock');
-      setReason(payload.fallbackReason || (useLiveDataset ? `${payload.provider} live data` : 'Live dataset sparse, using mock baseline.'));
-      setData(useLiveDataset ? transformed : coverageTimeline);
-      setArticles(useLiveDataset ? mappedArticles : []);
-      setError(useLiveDataset ? null : payload.error ? `${payload.error} Using mock data.` : 'Live fetch unavailable. Using mock data.');
-      setFetchedAt(payload.fetchedAt ?? new Date().toISOString());
+      setData(transformed.length > 2 ? transformed : coverageTimeline);
+      setArticles(mappedArticles);
+      if (transformed.length <= 2) setError('Live API returned sparse categorized data; merged with mock baseline.');
     } catch (err) {
-      setSource('mock');
-      setReason('Proxy request failed.');
       setData(coverageTimeline);
       setArticles([]);
-      setError(`Live fetch failed (${(err as Error).message}). Using mock data.`);
-      setFetchedAt(new Date().toISOString());
+      setError((err as Error).message);
     } finally {
       setLoading(false);
+      setFetchedAt(new Date().toISOString());
     }
   }, [topic, sourceBias]);
 
@@ -75,5 +71,5 @@ export const useNewsVolume = (topic: string, outlets: OutletConfig[]) => {
     void refresh();
   }, [refresh]);
 
-  return { data, articles, loading, error, fetchedAt, source, reason, refresh };
+  return { data, articles, loading, error, fetchedAt, refresh };
 };
